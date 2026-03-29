@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📚 My Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+ <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-blob blob1"></div>
+<div class="bg-blob blob2"></div>
+<div class="bg-blob blob3"></div>
+
+<header>
+  <span class="emoji-title">📚</span>
+  <h1>Lumira~ Your Study Planner</h1>
+  <p id="date-display">Loading date...</p>
+</header>
+
+<div id="notif"></div>
+
+<div class="container">
+  <div class="quote-box" id="quote-text">Loading your daily motivation...</div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Tasks</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-done">0</div><div class="stat-label">Completed ✅</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Remaining 🔥</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tasks',this)">📝 Tasks</button>
+    <button class="tab-btn" onclick="switchTab('timetable',this)">📅 Timetable</button>
+    <button class="tab-btn" onclick="switchTab('progress',this)">📊 Progress</button>
+    <button class="tab-btn" onclick="switchTab('pomodoro',this)">🍅 Pomodoro</button>
+  </div>
+
+  <!-- TASKS TAB -->
+  <div class="tab-panel active" id="tab-tasks">
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">✏️ Add New Task</div>
+        <label>Subject</label>
+        <select id="task-subject">
+          <option value="Maths">📐 Maths</option>
+          <option value="Physics">⚗️ Physics</option>
+          <option value="Chemistry">🧪 Chemistry</option>
+          <option value="Biology">🌿 Biology</option>
+          <option value="English">📖 English</option>
+          <option value="History">🏛️ History</option>
+          <option value="CS">💻 Computer Science</option>
+          <option value="Other">📌 Other</option>
+        </select>
+        <label>Task Description</label>
+        <textarea id="task-desc" placeholder="e.g. Chapter 3 notes, solve 20 problems..."></textarea>
+        <label>Due Date</label>
+        <input type="date" id="task-date"/>
+        <label>Priority</label>
+        <select id="task-priority">
+          <option value="high">🔴 High</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="addTask()">➕ Add Task</button>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 My Tasks</div>
+        <ul id="task-list">
+          <li class="empty-state"><span class="big-emoji">🌙</span>No tasks yet! Add one on the left.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMETABLE TAB -->
+  <div class="tab-panel" id="tab-timetable">
+    <div class="card" style="margin-bottom:20px">
+      <div class="section-title">⚙️ Manage Subjects</div>
+      <div class="subject-row">
+        <input type="text" id="sub-name" placeholder="Subject name (e.g. Maths)" style="margin-bottom:0"/>
+        <input type="color" id="sub-color" class="color-pick" value="#7c6af7"/>
+        <button class="btn btn-primary btn-sm" onclick="addSubject()">Add</button>
+      </div>
+      <div id="subject-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">📅 Weekly Schedule <span style="font-size:.75rem;color:var(--text-muted);font-family:Nunito,sans-serif">click a slot to edit</span></div>
+      <div class="time-grid">
+        <table>
+          <thead><tr><th>Time</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead>
+          <tbody id="timetable-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS TAB -->
+  <div class="tab-panel" id="tab-progress">
+    <!-- FIX: overall progress moved INSIDE the tab so it only shows on progress tab -->
+    <div class="overall-progress-wrap">
+      <div class="overall-progress-header">
+        <span class="overall-label">Overall Progress</span>
+        <span class="overall-pct" id="overall-pct-text">0%</span>
+      </div>
+      <div class="overall-bar-track">
+        <div class="overall-bar-fill" id="overall-bar-fill">
+          <span class="overall-bar-label" id="overall-bar-label">0%</span>
+        </div>
+      </div>
+      <div class="overall-sub-label" id="overall-sub-label">0 of 0 tasks completed</div>
+    </div>
+    <div class="grid-2">
+      <div class="card full-width">
+        <div class="section-title">📊 Subject Progress</div>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:18px">Based on tasks completed vs total per subject.</p>
+        <div class="subject-progress" id="progress-container">
+          <div class="empty-state"><span class="big-emoji">📭</span>Add subjects &amp; tasks to see progress!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POMODORO TAB -->
+  <div class="tab-panel" id="tab-pomodoro">
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">🍅 Pomodoro Timer</div>
+        <div class="pomo-wrap">
+          <div class="pomo-mode-btns">
+            <button class="mode-btn active" onclick="setMode('focus',25,this)">🧠 Focus</button>
+            <button class="mode-btn" onclick="setMode('short',5,this)">☕ Short Break</button>
+            <button class="mode-btn" onclick="setMode('long',15,this)">🌴 Long Break</button>
+          </div>
+          <div class="pomo-circle" id="pomo-circle">
+            <div class="pomo-circle-inner">
+              <div class="pomo-time" id="pomo-display">25:00</div>
+              <div class="pomo-label" id="pomo-mode-label">Focus Session</div>
+            </div>
+          </div>
+          <div class="pomo-controls">
+            <button class="btn btn-primary" id="pomo-start-btn" onclick="togglePomo()">▶ Start</button>
+            <button class="btn btn-danger" onclick="resetPomo()">↺ Reset</button>
+          </div>
+          <p style="margin-top:16px;font-size:.8rem;color:var(--text-muted)">Sessions today: <strong id="pomo-count" style="color:var(--accent1)">0</strong></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">💡 Study Tips</div>
+        <div id="tips-list" style="display:flex;flex-direction:column;gap:12px;font-size:.88rem;color:var(--text-muted);line-height:1.6"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .container -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="slot-modal">
+  <div class="modal">
+    <h3>✏️ Edit Time Slot</h3>
+    <label>Select Subject</label>
+    <select id="modal-subject"><option value="">-- empty --</option></select>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveSlot()">Save</button>
+      <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<footer>Study hard, dream big! 🌟</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  LUMIRA STUDY PLANNER — script.js
+// ════════════════════════════════════════════════════════════
+
+let tasks     = JSON.parse(localStorage.getItem('lum_tasks')     || '[]');
+let subjects  = JSON.parse(localStorage.getItem('lum_subjects')  || '[]');
+let timetable = JSON.parse(localStorage.getItem('lum_timetable') || '{}');
+let pomoCount = parseInt(localStorage.getItem('lum_pomo')        || '0');
+
+function save() {
+  localStorage.setItem('lum_tasks',     JSON.stringify(tasks));
+  localStorage.setItem('lum_subjects',  JSON.stringify(subjects));
+  localStorage.setItem('lum_timetable', JSON.stringify(timetable));
+  localStorage.setItem('lum_pomo',      pomoCount);
+}
+
+// ── Notification Banner ───────────────────────────────────────
+function showNotif(msg, type = 'success') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.classList.remove('show'); }, 3000);
+}
+
+// ── Format date dd/mm/yyyy ────────────────────────────────────
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// ── Live date display ─────────────────────────────────────────
+(function initDate() {
+  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const now = new Date();
+  document.getElementById('date-display').textContent =
+    `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+})();
+
+// ── Daily motivational quote ──────────────────────────────────
+const QUOTES = [
+  "We may encounter many defeats but we must not be defeated. — Maya Angelou",
+  "You must do the thing you think you cannot do. — Eleanor Roosevelt",
+  "She remembered who she was and the game changed. — Lalah Delia",
+  "I am not afraid of storms, for I'm learning how to sail my ship. — Louisa May Alcott",
+  "If you don't like something, change it. If you can't change it, change your attitude. — Maya Angelou",
+  "Don't sit down and wait for opportunities to come. Get up and make them. — Madam C.J. Walker",
+  "The most courageous act is still to think for yourself. Aloud. — Coco Chanel",
+  "I raise up my voice – not so I can shout but so that those without a voice can be heard. — Malala Yousafzai",
+];
+
+const QUOTE_VERSION = '2';
+
+(function showQuote() {
+  const today         = new Date().toDateString();
+  const storedDate    = localStorage.getItem('lum_quote_date');
+  const storedVersion = localStorage.getItem('lum_quote_version');
+  let q;
+  if (storedDate === today && storedVersion === QUOTE_VERSION) {
+    q = localStorage.getItem('lum_quote_text');
+  } else {
+    q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    localStorage.setItem('lum_quote_date',    today);
+    localStorage.setItem('lum_quote_text',    q);
+    localStorage.setItem('lum_quote_version', QUOTE_VERSION);
+  }
+  document.getElementById('quote-text').textContent = '✨  ' + q;
+})();
+
+// ════════════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'progress')  renderProgress();
+  if (name === 'timetable') renderTimetable();
+}
+
+// ════════════════════════════════════════════════════════════
+//  TASKS
+// ════════════════════════════════════════════════════════════
+
+const SUBJ_EMOJI = {
+  Maths:'📐', Physics:'⚗️', Chemistry:'🧪', Biology:'🌿',
+  English:'📖', History:'🏛️', CS:'💻', Other:'📌'
+};
+
+function addTask() {
+  const desc = document.getElementById('task-desc').value.trim();
+  if (!desc) { showNotif('Please enter a task description! 📝', 'error'); return; }
+
+  tasks.unshift({
+    id:       Date.now(),
+    subject:  document.getElementById('task-subject').value,
+    desc,
+    date:     document.getElementById('task-date').value,
+    priority: document.getElementById('task-priority').value,
+    done:     false,
+    created:  new Date().toISOString()
+  });
+
+  save();
+  renderTasks();
+  updateStats();
+  renderOverallProgress();
+  document.getElementById('task-desc').value = '';
+  showNotif('Task added! 🎉');
+}
+
+function toggleTask(id) {
+  const t = tasks.find(x => Number(x.id) === Number(id));
+  if (t) { t.done = !t.done; save(); renderTasks(); updateStats(); renderOverallProgress(); }
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(x => Number(x.id) !== Number(id));
+  save(); renderTasks(); updateStats(); renderOverallProgress();
+  showNotif('Task deleted 🗑️');
+}
+
+function renderTasks() {
+  const ul = document.getElementById('task-list');
+  if (!tasks.length) {
+    ul.innerHTML = '<li class="empty-state"><span class="big-emoji">🌙</span>No tasks yet! Add one on the left.</li>';
+    return;
+  }
+
+  const PRIORITY_LABEL = { high:'🔴 High', medium:'🟡 Medium', low:'🟢 Low' };
+
+  ul.innerHTML = tasks.map(t => `
+    <li class="task-item ${t.done ? 'done' : ''} priority-${t.priority}">
+      <div class="task-check" onclick="toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
+      <div class="task-body">
+        <div class="task-desc-text">${t.desc}</div>
+        <div class="task-meta">
+          <span class="tag">${SUBJ_EMOJI[t.subject] || '📌'} ${t.subject}</span>
+          ${t.date ? `<span class="tag">📅 ${formatDate(t.date)}</span>` : ''}
+          <span class="tag priority-tag ${t.priority}">${PRIORITY_LABEL[t.priority]}</span>
+        </div>
+      </div>
+      <button class="task-del-btn" onclick="deleteTask(${t.id})" title="Delete">🗑</button>
+    </li>
+  `).join('');
+}
+
+function updateStats() {
+  const total = tasks.length;
+  const done  = tasks.filter(t => t.done).length;
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-done').textContent    = done;
+  document.getElementById('stat-pending').textContent = total - done;
+}
+
+// ════════════════════════════════════════════════════════════
+//  TIMETABLE
+// ════════════════════════════════════════════════════════════
+
+const TIME_SLOTS = [
+  '8:00 AM','9:00 AM','10:00 AM','11:00 AM',
+  '12:00 PM','1:00 PM','2:00 PM','3:00 PM',
+  '4:00 PM','5:00 PM','6:00 PM','7:00 PM'
+];
+const WEEK_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+
+let activeSlot = null;
+
+function addSubject() {
+  const name  = document.getElementById('sub-name').value.trim();
+  const color = document.getElementById('sub-color').value;
+  if (!name) { showNotif('Enter a subject name!', 'error'); return; }
+  if (subjects.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+    showNotif('Subject already exists!', 'error'); return;
+  }
+  subjects.push({ name, color });
+  save();
+  renderSubjectChips();
+  renderTimetable();
+  document.getElementById('sub-name').value = '';
+  showNotif(`"${name}" added! 🎨`);
+}
+
+function removeSubject(name) {
+  subjects = subjects.filter(s => s.name !== name);
+  for (const key in timetable) {
+    if (timetable[key] === name) delete timetable[key];
+  }
+  save();
+  renderSubjectChips();
+  renderTimetable();
+  showNotif(`"${name}" removed.`, 'info');
+}
+
+function renderSubjectChips() {
+  const container = document.getElementById('subject-chips');
+  if (!subjects.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:.82rem">No subjects yet. Add one above!</span>';
+    return;
+  }
+  container.innerHTML = subjects.map(s => `
+    <span class="chip" style="background:${s.color}22;border:1.5px solid ${s.color};color:${s.color}">
+      ${s.name}
+      <span class="chip-del" onclick="removeSubject('${s.name}')" title="Remove">×</span>
+    </span>
+  `).join('');
+}
+
+function renderTimetable() {
+  const tbody = document.getElementById('timetable-body');
+  tbody.innerHTML = TIME_SLOTS.map(time => `
+    <tr>
+      <td class="time-cell">${time}</td>
+      ${WEEK_DAYS.map(day => {
+        const key  = `${time}__${day}`;
+        const subj = timetable[key] || '';
+        const sObj = subjects.find(s => s.name === subj);
+        const style = sObj
+          ? `background:${sObj.color}22;border-left:3px solid ${sObj.color};color:${sObj.color};font-weight:700`
+          : '';
+        return `
+          <td class="slot-cell ${subj ? 'filled' : ''}"
+              onclick="openModal('${time}','${day}')"
+              style="${style}">
+            ${subj || '<span class="slot-empty">+</span>'}
+          </td>`;
+      }).join('')}
+    </tr>
+  `).join('');
+}
+
+function openModal(time, day) {
+  activeSlot = { time, day };
+  const sel = document.getElementById('modal-subject');
+  sel.innerHTML = '<option value="">-- empty --</option>' +
+    subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+  sel.value = timetable[`${time}__${day}`] || '';
+  document.getElementById('slot-modal').style.display = 'flex';
+}
+
+function saveSlot() {
+  if (!activeSlot) return;
+  const key   = `${activeSlot.time}__${activeSlot.day}`;
+  const value = document.getElementById('modal-subject').value;
+  if (value) timetable[key] = value;
+  else delete timetable[key];
+  save();
+  renderTimetable();
+  closeModal();
+  showNotif('Schedule updated! 📅');
+}
+
+function closeModal() {
+  document.getElementById('slot-modal').style.display = 'none';
+  activeSlot = null;
+}
+
+document.getElementById('slot-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ════════════════════════════════════════════════════════════
+//  PROGRESS
+// ════════════════════════════════════════════════════════════
+
+const FALLBACK_COLORS = ['#7c6af7','#f78166','#56d364','#e3b341','#58a6ff','#bc8cff','#ff7b72','#3fb950'];
+
+function renderProgress() {
+  const container = document.getElementById('progress-container');
+
+  const allSubjects = [...new Set([
+    ...tasks.map(t => t.subject),
+    ...subjects.map(s => s.name)
+  ])];
+
+  if (!allSubjects.length) {
+    container.innerHTML = '<div class="empty-state"><span class="big-emoji">📭</span>Add subjects &amp; tasks to see progress!</div>';
+    return;
+  }
+
+  container.innerHTML = allSubjects.map((subj, i) => {
+    const subjTasks = tasks.filter(t => t.subject.toLowerCase() === subj.toLowerCase());
+    const total     = subjTasks.length;
+    const done      = subjTasks.filter(t => t.done).length;
+    const pct       = total ? Math.round((done / total) * 100) : 0;
+    const sObj      = subjects.find(s => s.name.toLowerCase() === subj.toLowerCase());
+    const color     = sObj ? sObj.color : FALLBACK_COLORS[i % FALLBACK_COLORS.length];
+    const emoji     = SUBJ_EMOJI[subj] || '📌';
+
+    let badgeClass, badgeText;
+    if (total === 0)      { badgeClass = 'badge-none';     badgeText = 'No Tasks'; }
+    else if (pct === 100) { badgeClass = 'badge-done';     badgeText = '✓ Complete'; }
+    else if (done === 0)  { badgeClass = 'badge-none';     badgeText = 'Not Started'; }
+    else                  { badgeClass = 'badge-progress'; badgeText = 'In Progress'; }
+
+    const maxDots = Math.min(total, 20);
+    const dots = total
+      ? Array.from({ length: maxDots }, (_, di) =>
+          `<span class="dot ${di < done ? 'dot-done' : 'dot-pending'}" style="background:${color}"></span>`
+        ).join('')
+      : '';
+
+    return `
+      <div class="progress-row">
+        <div class="progress-header">
+          <span class="progress-label">${emoji} ${subj}</span>
+          <div class="progress-meta">
+            <span class="progress-task-pill" style="background:${color}22;color:${color};border:1px solid ${color}55">
+              ${done} / ${total} tasks
+            </span>
+            <span class="progress-status-badge ${badgeClass}">${badgeText}</span>
+          </div>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill-new"
+               id="pbar-${i}"
+               style="width:0%;background:linear-gradient(90deg,${color}cc,${color});">
+          </div>
+          ${pct > 0
+            ? `<span class="progress-bar-pct-label" id="plabel-${i}" style="right:100%">${pct}%</span>`
+            : `<span class="progress-bar-zero-label">0%</span>`
+          }
+        </div>
+        ${total > 0 ? `<div class="progress-pending-dots">${dots}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Double rAF: lets browser paint width:0% first, then animates to real width
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      allSubjects.forEach((subj, i) => {
+        const subjTasks = tasks.filter(t => t.subject.toLowerCase() === subj.toLowerCase());
+        const total     = subjTasks.length;
+        const done      = subjTasks.filter(t => t.done).length;
+        const pct       = total ? Math.round((done / total) * 100) : 0;
+        const bar       = document.getElementById(`pbar-${i}`);
+        const label     = document.getElementById(`plabel-${i}`);
+        if (bar)   bar.style.width = pct + '%';
+        if (label) label.style.right = (100 - pct) + '%';
+      });
+    });
+  });
+}
+
+function renderOverallProgress() {
+  const total = tasks.length;
+  const done  = tasks.filter(t => t.done).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+
+  const pctText  = document.getElementById('overall-pct-text');
+  const barFill  = document.getElementById('overall-bar-fill');
+  const barLabel = document.getElementById('overall-bar-label');
+  const subLabel = document.getElementById('overall-sub-label');
+
+  if (pctText)  pctText.textContent  = pct + '%';
+  if (barFill)  barFill.style.width  = pct + '%';
+  if (barLabel) barLabel.textContent = pct + '%';
+  if (subLabel) subLabel.textContent = `${done} of ${total} tasks completed`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  POMODORO TIMER
+// ════════════════════════════════════════════════════════════
+
+let pomoDuration = 25 * 60;
+let pomoTimeLeft  = pomoDuration;
+let pomoRunning   = false;
+let pomoInterval  = null;
+let pomoMode      = 'focus';
+
+const POMO_COLORS = { focus: '#7c6af7', short: '#56d364', long: '#e3b341' };
+const POMO_LABELS = { focus: 'Focus Session', short: 'Short Break ☕', long: 'Long Break 🌴' };
+
+function setMode(mode, mins, btn) {
+  clearInterval(pomoInterval);
+  pomoRunning  = false;
+  pomoMode     = mode;
+  pomoDuration = mins * 60;
+  pomoTimeLeft = pomoDuration;
+  document.getElementById('pomo-start-btn').textContent = '▶ Start';
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pomo-mode-label').textContent = POMO_LABELS[mode];
+  updatePomoDisplay();
+}
+
+function togglePomo() {
+  if (pomoRunning) {
+    clearInterval(pomoInterval);
+    pomoRunning = false;
+    document.getElementById('pomo-start-btn').textContent = '▶ Resume';
+  } else {
+    pomoRunning = true;
+    document.getElementById('pomo-start-btn').textContent = '⏸ Pause';
+    pomoInterval = setInterval(() => {
+      pomoTimeLeft--;
+      updatePomoDisplay();
+      if (pomoTimeLeft <= 0) {
+        clearInterval(pomoInterval);
+        pomoRunning = false;
+        document.getElementById('pomo-start-btn').textContent = '▶ Start';
+        if (pomoMode === 'focus') {
+          pomoCount++;
+          document.getElementById('pomo-count').textContent = pomoCount;
+          save();
+        }
+        const msg = pomoMode === 'focus'
+          ? '🎉 Focus session complete! Take a well-earned break!'
+          : '🍅 Break over — back to it!';
+        showNotif(msg);
+        alert(msg);
+        pomoTimeLeft = pomoDuration;
+        updatePomoDisplay();
+      }
+    }, 1000);
+  }
+}
+
+function resetPomo() {
+  clearInterval(pomoInterval);
+  pomoRunning  = false;
+  pomoTimeLeft = pomoDuration;
+  document.getElementById('pomo-start-btn').textContent = '▶ Start';
+  updatePomoDisplay();
+}
+
+function updatePomoDisplay() {
+  const m = String(Math.floor(pomoTimeLeft / 60)).padStart(2, '0');
+  const s = String(pomoTimeLeft % 60).padStart(2, '0');
+  document.getElementById('pomo-display').textContent = `${m}:${s}`;
+  const pct    = pomoTimeLeft / pomoDuration;
+  const color  = POMO_COLORS[pomoMode] || '#7c6af7';
+  const circle = document.getElementById('pomo-circle');
+  circle.style.background =
+    `conic-gradient(${color} 0% ${pct * 100}%, #2a2d3a ${pct * 100}% 100%)`;
+}
+
+// ── Study Tips ────────────────────────────────────────────────
+const TIPS = [
+  "🧠 Use active recall — test yourself instead of re-reading notes.",
+  "⏱️ Study in focused 25-min blocks, then take a 5-min break (Pomodoro!).",
+  "✍️ Handwriting notes boosts retention vs typing on a laptop.",
+  "🌙 Sleep is when your brain consolidates memories — don't skip it!",
+  "🎯 Set one clear goal before every study session.",
+  "🥤 Stay hydrated — even mild dehydration hurts concentration.",
+  "📵 Put your phone face-down or in another room while studying.",
+  "🔁 Spaced repetition: review material after 1 day, 3 days, then 1 week.",
+];
+
+function renderTips() {
+  document.getElementById('tips-list').innerHTML =
+    TIPS.map(tip => `<div class="tip-item">${tip}</div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+(function init() {
+  document.getElementById('task-date').valueAsDate = new Date();
+  renderTasks();
+  updateStats();
+  renderOverallProgress();
+  renderSubjectChips();
+  renderTimetable();
+  renderTips();
+  updatePomoDisplay();
+  document.getElementById('pomo-count').textContent = pomoCount;
+})();
+
+</script>
+</body>
+</html>
